@@ -74,50 +74,44 @@ require("lazy").setup({
         config = function()
             local on_attach = function(client, bufnr)
                 local opts = { buffer = bufnr, noremap = true, silent = true }
-                -- Перейти к определению
                 vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
-                -- перейти к использованию
                 vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
                 vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
-                -- Документация
                 vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-                -- Рефакторинг
                 vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
-                -- Диагностика
                 vim.keymap.set('n', 'gl', vim.diagnostic.open_float, opts)
-                -- Форматирование
                 vim.keymap.set('n', '<leader>f', function()
                     vim.lsp.buf.format({ async = true })
-                end, { desc = 'Format code', buffer = bufnr })
+                end, { buffer = bufnr, desc = 'Format code' })
             end
 
-            -- gopls — запуск только для файлов Go
+            local util = require("lspconfig.util")
+
+            -- gopls
             vim.api.nvim_create_autocmd("FileType", {
                 pattern = "go",
                 callback = function()
                     vim.lsp.start({
                         name = "gopls",
                         cmd = { "gopls" },
-                        root_dir = vim.lsp.config.util.root_pattern("go.mod", ".git"),
+                        root_dir = util.root_pattern("go.mod", ".git"),
                         settings = {
                             gopls = {
                                 gofumpt = true,
                                 staticcheck = true,
                                 usePlaceholders = true,
-                                analyses = {
-                                    unusedparams = true,
-                                },
+                                analyses = { unusedparams = true },
                             },
                         },
                         on_attach = on_attach,
                     })
                 end,
             })
-            -- lua-language-server (lua_ls)
+
+            -- lua_ls
             vim.api.nvim_create_autocmd("FileType", {
                 pattern = "lua",
                 callback = function()
-                    local util = require("lspconfig.util")
                     vim.lsp.start({
                         name = "lua_ls",
                         cmd = { "lua-language-server" },
